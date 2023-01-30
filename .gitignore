@@ -3,6 +3,7 @@ venv/
 __pycache__
 rpc.py
 weather_app.py
-data
+data/images
+data/weather_code.txt
 temp.py
 test.ipynb
