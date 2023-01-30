@@ -9,3 +9,4 @@ TEST_CHANEL_ID = int(os.environ['TEST_CHANEL_ID'])
 CHAT_CHANEL_ID = int(os.environ['CHAT_CHANEL_ID'])
 EGICHCOOL_ID = int(os.environ['EGICHCOOL_ID'])
 BOT_ID = os.environ['BOT_ID']
+MAIN_CHANEL_ID = os.environ['MAIN_CHANEL_ID']

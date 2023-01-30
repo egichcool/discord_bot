@@ -1,11 +1,11 @@
 import discord
 from discord.ext import commands
 import asyncio
-from API_KEYS import BOT_TOKEN, TEST_CHANEL_ID, CHAT_CHANEL_ID, API_KEY, EGICHCOOL_ID
+from API_KEYS import BOT_TOKEN, TEST_CHANEL_ID, CHAT_CHANEL_ID, API_KEY, MAIN_CHANEL_ID
 import openai
 from openmeteo_py import Options,OWmanager
 import json
-#import requests
+import requests
 
 
 #class MyClient(discord.Client):
@@ -15,11 +15,13 @@ class MyClient(commands.Bot):
         openai.api_key = API_KEY        
         with open('data/weather_code.json', 'r') as json_file:
             self.weather_codes = json.load(json_file)
+        self.bg_task = self.loop.create_task(self.my_background_task())
           
-
+    '''
     async def setup_hook(self) -> None:
         # Создать таск на фоне
         self.bg_task = self.loop.create_task(self.my_background_task())
+    '''
 
     async def on_ready(self):
         print(f'Вечер в хату {self.user} (ID: {self.user.id})')
@@ -45,23 +47,11 @@ class MyClient(commands.Bot):
             embed.set_thumbnail(url=f"{self.weather_codes[str(weather_data['weathercode'])]['image_night']}")
         
         return embed
-    
-    '''
-    @tree.command(name='Погода по адресу')
-    async def weather_to_specific_coords(self, address):
-        url = f'https://nominatim.openstreetmap.org/search/{address}?format=json'
-        response = requests.get(url).json()
-        if response == []:
-            #await 
-            return False
-        
-        embed = self.get_embed_weather(response[0]["lat"], response[0]["lon"])
-    '''
 
 
     async def my_background_task(self):
         await self.wait_until_ready()
-        counter = 0
+        counter = 0        
         channel = self.get_channel(TEST_CHANEL_ID)  # ID канала для отправки погоды   
 
         embed = await self.get_embed_weather()    # Тут получать данные месаги
@@ -79,38 +69,46 @@ class MyClient(commands.Bot):
 
 intents=discord.Intents.default()
 intents.message_content = True
-bot = MyClient(intents=intents, command_prefix=commands.when_mentioned_or("!"))
-#tree = app_commands.CommandTree(bot)
+bot = MyClient(intents=intents)
 
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return        
-            
+    
     if message.channel.id == TEST_CHANEL_ID or message.channel.id == CHAT_CHANEL_ID:
 
         if message.content.startswith('id'):    
             await message.channel.send(message.channel.id)
     
-        else:                
-            '''
+        else:          
+                        
             response = openai.Completion.create(
             model="text-davinci-003",
             prompt=message.content,
             temperature=0.7,
-            max_tokens=1000,
+            max_tokens=100,
             top_p=1.0,
             frequency_penalty=0.5,
             presence_penalty=0.0,
             )     
             await message.channel.send(response['choices'][0]['text'])
-            '''
-            print(message.content)
+            
+            
+            #print(message.content)
 
-@bot.command(name = "commandname", description = "My first application Command", guild=discord.Object(id=958615114595045376))
-async def first_command(interaction):
-    await interaction.response.send_message("Hello!")
-
+@bot.slash_command(name='погода_по_адресу', guild_ids=['958615114595045376'])
+#@bot.slash_command(name='погода_по_адресу', guild_ids=[...])
+#@bot.slash_command(name='погода_по_адресу')
+async def weather_to_specific_coords(ctx):
+    url = f'https://nominatim.openstreetmap.org/search/{ctx.message}?format=json'
+    response = requests.get(url).json()
+    if response == []:
+        await ctx.respond('Введён некорректный адрес')
+        #return False
+    else:
+        embed = await bot.get_embed_weather(coords=(float(response[0]["lat"]), float(response[0]["lon"])))
+        await ctx.respond(embed=embed)
 
 
 
