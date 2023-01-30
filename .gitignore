@@ -4,3 +4,5 @@ __pycache__
 rpc.py
 weather_app.py
 data
+temp.py
+test.ipynb
