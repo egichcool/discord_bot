@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import asyncio
-from API_KEYS import BOT_TOKEN, TEST_CHANEL_ID, CHAT_CHANEL_ID, API_KEY, LAT, LON
+from API_KEYS import BOT_TOKEN, TEST_CHANEL_ID, CHAT_CHANEL_ID, API_KEY, LAT, LON, WEATHER_CHANNEL_ID
 import openai
 from openmeteo_py import Options,OWmanager
 import json
@@ -47,8 +47,8 @@ class MyClient(commands.Bot):
 
     async def my_background_task(self):
         await self.wait_until_ready()
-        counter = 0        
-        channel = self.get_channel(TEST_CHANEL_ID)  # ID канала для отправки погоды   
+           
+        channel = self.get_channel(WEATHER_CHANNEL_ID)  # ID канала для отправки погоды   
 
         embed = await self.get_embed_weather()    # Тут получать данные месаги
         
@@ -81,7 +81,7 @@ async def on_message(message):
             model="text-davinci-003",
             prompt=message.content,
             temperature=0.7,
-            max_tokens=100,
+            max_tokens=2000,
             top_p=1.0,
             frequency_penalty=0.5,
             presence_penalty=0.0,
