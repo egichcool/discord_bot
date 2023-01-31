@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 import asyncio
-from API_KEYS import BOT_TOKEN, TEST_CHANEL_ID, CHAT_CHANEL_ID, API_KEY
+from API_KEYS import BOT_TOKEN, TEST_CHANEL_ID, CHAT_CHANEL_ID, API_KEY, LAT, LON
 import openai
 from openmeteo_py import Options,OWmanager
 import json
@@ -21,14 +21,14 @@ class MyClient(commands.Bot):
             type=discord.ActivityType.watching, name="за погодой"))
         print(f'Вечер в хату {self.user} (ID: {self.user.id})')        
 
-    async def get_weather(self, coords=(55.738543, 37.541263)):
+    async def get_weather(self, coords=(LAT, LON)):
         self.coords = coords
         options = Options(*self.coords, current_weather=True)
         mgr = OWmanager(options)
         meteo = mgr.get_data()
         return meteo['current_weather']
 
-    async def get_embed_weather(self, coords=(55.738543, 37.541263), location='Москва'):
+    async def get_embed_weather(self, coords=(LAT, LON), location='Москва'):
         weather_data = await self.get_weather(coords)    
 
         embed = discord.Embed(title=f'Прогноз погоды', 
