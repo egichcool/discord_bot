@@ -1,0 +1,6 @@
+discord.py==2.1.0
+openai==0.26.4
+openmeteo_py==0.0.1
+python-dotenv==0.21.1
+requests==2.28.2
+tiktoken==0.1.2
