@@ -79,18 +79,21 @@ class Chatbot:
     ) -> str:
         full_response = ""
         for response in completion:
-            if response.get("choices") is None:
-                return "ChatGPT API returned no choices"
-            if len(response["choices"]) == 0:
-                return "ChatGPT API returned no choices"
-            if response["choices"][0].get("finish_details") is not None:
-                break
-            if response["choices"][0].get("text") is None:
-                return "ChatGPT API returned no text"
-            if response["choices"][0]["text"] == "<|im_end|>":
-                break
-            yield response["choices"][0]["text"]
-            full_response += response["choices"][0]["text"]
+            try:
+                if response.get("choices") is None:
+                    return "ChatGPT API returned no choices"
+                if len(response["choices"]) == 0:
+                    return "ChatGPT API returned no choices"
+                if response["choices"][0].get("finish_details") is not None:
+                    break
+                if response["choices"][0].get("text") is None:
+                    return "ChatGPT API returned no text"
+                if response["choices"][0]["text"] == "<|im_end|>":
+                    break
+                yield response["choices"][0]["text"]
+                full_response += response["choices"][0]["text"]
+            except:
+                pass
 
         # Add to chat history
         self.prompt.add_to_history(user_request, full_response, user)
