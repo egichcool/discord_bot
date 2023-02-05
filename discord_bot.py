@@ -93,7 +93,7 @@ class Chatbot:
                 yield response["choices"][0]["text"]
                 full_response += response["choices"][0]["text"]
             except:
-                pass
+                yield ''
 
         # Add to chat history
         self.prompt.add_to_history(user_request, full_response, user)
