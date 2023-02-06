@@ -78,22 +78,23 @@ class Chatbot:
         self, user_request: str, completion: dict, conversation_id: str = None, user: str = "User"
     ) -> str:
         full_response = ""
+        not_full_response = ''
         for response in completion:
-            try:
-                if response.get("choices") is None:
-                    return "ChatGPT API returned no choices"
-                if len(response["choices"]) == 0:
-                    return "ChatGPT API returned no choices"
-                if response["choices"][0].get("finish_details") is not None:
-                    break
-                if response["choices"][0].get("text") is None:
-                    return "ChatGPT API returned no text"
-                if response["choices"][0]["text"] == "<|im_end|>":
-                    break
-                yield response["choices"][0]["text"]
-                full_response += response["choices"][0]["text"]
-            except:
-                yield ''
+            if response.get("choices") is None:
+                return "ChatGPT API returned no choices"
+            if len(response["choices"]) == 0:
+                return "ChatGPT API returned no choices"
+            if response["choices"][0].get("finish_details") is not None:
+                break
+            if response["choices"][0].get("text") is None:
+                return "ChatGPT API returned no text"
+            if response["choices"][0]["text"] == "<|im_end|>":
+                break
+            if len(response["choices"][0]["text"]) + len(not_full_response) == 0:
+                not_full_response += response["choices"][0]["text"]
+            else:
+                yield not_full_response + response["choices"][0]["text"]
+                full_response += not_full_response + response["choices"][0]["text"]
 
         # Add to chat history
         self.prompt.add_to_history(user_request, full_response, user)
@@ -340,17 +341,20 @@ async def on_message(message):
     if message.channel.id == CHAT_CHANEL_ID:
         if message.content.startswith('id'):    
             await message.channel.send(message.channel.id)
-        else:          
-            response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=message.content,
-            temperature=0.7,
-            max_tokens=3000,
-            top_p=1.0,
-            frequency_penalty=0.5,
-            presence_penalty=0.0,
-            )     
-            text = response['choices'][0]['text']
+        else:     
+            try:     
+                response = openai.Completion.create(
+                model="text-davinci-003",
+                prompt=message.content,
+                temperature=0.7,
+                max_tokens=3000,
+                top_p=1.0,
+                frequency_penalty=0.5,
+                presence_penalty=0.0,
+                )     
+                text = response['choices'][0]['text']
+            except:                
+                text = 'The server had an error while processing your request. Sorry about that!'
             while text != '':
                 await message.channel.send(text[:1800])
                 text = text[1800:]
@@ -404,27 +408,33 @@ async def on_message(message):
                 text = None
                 temp_words_count = 0
                 all_words_count = 0
-                for response in chatbot.ask_stream(prompt, temperature=temperature):
-                    if text == None:
-                        if response == '' or response == ' ' or response == '\n':
-                            continue
-                        text = response
-                        bot_message = await message.channel.send(response)
-                    else:
-                        all_words_count += 1
-                        temp_words_count += 1
-                        text += response
-                        if temp_words_count == 10:
-                            temp_words_count = 0
-                            await bot_message.edit(text)
-                    if all_words_count > 1800:
-                        text = None
+                try:
+                    for response in chatbot.ask_stream(prompt, temperature=temperature):
+                        if text == None:
+                            if response == '' or response == ' ' or response == '\n':
+                                continue
+                            text = response
+                            bot_message = await message.channel.send(response)
+                        else:
+                            all_words_count += 1
+                            temp_words_count += 1
+                            text += response
+                            if temp_words_count == 10:
+                                temp_words_count = 0
+                                await bot_message.edit(text)
+                        if all_words_count > 1800:
+                            text = None
+                except openai.error.APIError:
+                    await message.channel.send('The server experienced an error while processing your request. Sorry about that!')
                 bot_message = None
                 text = None
             else:
                 #Full answer return
-                response = chatbot.ask(prompt, temperature=temperature)
-                text = response['choices'][0]['text']
+                try:
+                    response = chatbot.ask(prompt, temperature=temperature)
+                    text = response['choices'][0]['text']
+                except openai.error.APIError:
+                    text = 'The server experienced an error while processing your request. Sorry about that!'
                 while text != '':
                     await message.channel.send(text[:1800])
                     text = text[1800:]
